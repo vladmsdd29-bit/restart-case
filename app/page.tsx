@@ -134,7 +134,95 @@ export default function Home(){
  <div className="stats"><div className="stat"><small>ВИРТУАЛЬНЫЙ БАЛАНС</small><b>◆ {fmt(user.balance)}</b></div><div className="stat"><small>ОТКРЫТО КЕЙСОВ</small><b>{user.opened}</b></div><div className="stat"><small>ПРЕДМЕТОВ В ИНВЕНТАРЕ</small><b>{inventory.length}</b></div></div>
  {notice&&<div className="notice">✓ {notice}<button onClick={()=>setNotice("")}>×</button></div>}
  <section id="cases"><div className="sectionHead"><div><h2>Выбери свой кейс</h2><p>Шансы выпадения показаны внутри каждого кейса</p></div><span className="pill">6 КЕЙСОВ</span></div><div className="catalogStatus"><span className={catalogCount?"statusDot online":"statusDot"}/>{catalogLoading?"Загружаем каталог изображений…":catalogCount?`Каталог CS2 подключён · ${catalogCount} изображений`:"Каталог изображений временно недоступен · включены резервные иллюстрации"}</div><div className="filters"><button className={filter==="all"?"chosen":""} onClick={()=>setFilter("all")}>Все кейсы</button><button className={filter==="budget"?"chosen":""} onClick={()=>setFilter("budget")}>До 300</button><button className={filter==="premium"?"chosen":""} onClick={()=>setFilter("premium")}>Премиум</button></div><div className="cases">{visible.map(c=><article className="case" key={c.id} onClick={()=>{setSelected(c);setResult(null);setError("");}}><div className={`caseArt rarityFrame ${rarityColor(c.items[2].rarity)}`} style={{"--accent":c.accent} as CSSProperties}><div className="caseArtGlow"/><WeaponArt name={c.items[2].name} rarity={c.items[2].rarity} imageUrl={skinImages[c.items[2].name]}/><div className="caseSpark">✦</div><span className={`caseRarity ${rarityColor(c.items[2].rarity)}`}>{c.items[2].rarity}</span></div><h3>{c.name}</h3><p>{c.description}</p><div className="caseFoot"><b>◆ {fmt(c.price)}</b><button className="btn">Открыть ↗</button></div></article>)}</div></section>
- <section className="panel" id="inventory"><div className="sectionHead"><div><h2>Мой инвентарь</h2><p>Продавай предметы и возвращай виртуальные монеты</p></div><span className="pill">{inventory.length} ПРЕДМЕТОВ</span></div><div className="items">{inventory.length?inventory.map(x=><div className={`item rarityItem ${rarityColor(x.rarity)}`} key={x.id}><WeaponArt name={x.name} rarity={x.rarity} imageUrl={skinImages[x.name]}/><b>{x.name}</b><small className={`rarityText ${rarityColor(x.rarity)}`}>{x.rarity} · ◆ {fmt(x.value)}</small><button className="sellBtn" disabled={selling===x.id} onClick={()=>sell(x)}>{selling===x.id?"Продаём…":`Продать · ${fmt(x.value)} ◆`}</button></div>):<div className="empty">Пока пусто. Открой первый кейс!</div>}</div></section>
+ 
+<section className="panel upgradePanel" id="upgrade">
+  <div className="sectionHead">
+    <div>
+      <h2>⚡ Апгрейд скинов</h2>
+      <p>
+        Выбери свой предмет и попробуй получить более дорогой!
+      </p>
+    </div>
+  </div>
+
+  <div className="upgradeGrid">
+    <div className="upgradeBox">
+      <h3>1. Твой предмет</h3>
+      <select
+        value={upgradeSource ?? ""}
+        onChange={e => {
+          setUpgradeSource(
+            e.target.value ? Number(e.target.value) : null
+          );
+          setUpgradeTarget("");
+        }}
+        disabled={upgrading}
+      >
+        <option value="">Выбери предмет</option>
+        {inventory.map(i => (
+          <option key={i.id} value={i.id}>
+            {i.name} — {i.value} монет
+          </option>
+        ))}
+      </select>
+      {sourceItem && (
+        <WeaponArt
+          name={sourceItem.name}
+          rarity={sourceItem.rarity}
+          imageUrl={skinImages[sourceItem.name]}
+        />
+      )}
+    </div>
+
+    <div className="upgradeChance">
+      <span>ШАНС УСПЕХА</span>
+      <strong>{upgradeChance.toFixed(2)}%</strong>
+      <div className="upgradeBar">
+        <div style={{ width: `${upgradeChance}%` }} />
+      </div>
+    </div>
+
+    <div className="upgradeBox">
+      <h3>2. Желаемый скин</h3>
+      <select
+        value={upgradeTarget}
+        onChange={e => setUpgradeTarget(e.target.value)}
+        disabled={!sourceItem || upgrading}
+      >
+        <option value="">Выбери скин</option>
+        {upgradeCatalog
+          .filter(i => sourceItem && i.value > sourceItem.value)
+          .map(i => (
+            <option key={i.name} value={i.name}>
+              {i.name} — {i.value} монет
+            </option>
+          ))}
+      </select>
+      {targetItem && (
+        <WeaponArt
+          name={targetItem.name}
+          rarity={targetItem.rarity}
+          imageUrl={skinImages[targetItem.name]}
+        />
+      )}
+    </div>
+  </div>
+
+  <div className="upgradeActions">
+    <button
+      className="btn"
+      disabled={!upgradeChance || upgrading}
+      onClick={performUpgrade}
+    >
+      {upgrading ? "Апгрейд выполняется..." : "⚡ АПГРЕЙД"}
+    </button>
+    <p>
+      При неудаче исходный предмет исчезает.
+      Все предметы и монеты виртуальные.
+    </p>
+  </div>
+</section>
+<section className="panel" id="inventory"><div className="sectionHead"><div><h2>Мой инвентарь</h2><p>Продавай предметы и возвращай виртуальные монеты</p></div><span className="pill">{inventory.length} ПРЕДМЕТОВ</span></div><div className="items">{inventory.length?inventory.map(x=><div className={`item rarityItem ${rarityColor(x.rarity)}`} key={x.id}><WeaponArt name={x.name} rarity={x.rarity} imageUrl={skinImages[x.name]}/><b>{x.name}</b><small className={`rarityText ${rarityColor(x.rarity)}`}>{x.rarity} · ◆ {fmt(x.value)}</small><button className="sellBtn" disabled={selling===x.id} onClick={()=>sell(x)}>{selling===x.id?"Продаём…":`Продать · ${fmt(x.value)} ◆`}</button></div>):<div className="empty">Пока пусто. Открой первый кейс!</div>}</div></section>
  <section className="panel" id="history"><div className="sectionHead"><div><h2>История открытий</h2><p>Последние 20 операций</p></div></div>{history.length?<div className="history">{history.map(h=><div className="historyRow" key={h.id}><span>◈</span><div><b>{h.itemName}</b><small>{h.caseName} · {h.createdAt}</small></div><strong>◆ {fmt(h.itemValue)}</strong></div>)}</div>:<div className="empty">История появится после первого открытия.</div>}</section>
  <footer><b>RESTART CASE</b><span>Локальный CS2 case-opening demo · Только виртуальные монеты</span><span>Не связан с Valve или Steam. Реальные платежи и торговля отключены.</span></footer></div></main>
  {selected&&<div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setSelected(null)}}><div className="modal"><div className="modalTop"><div><div className="eyebrow">RESTART CASE · DROP SYSTEM</div><h2>{selected.name}</h2></div><button className="close" onClick={()=>!busy&&setSelected(null)}>✕</button></div>
