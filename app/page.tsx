@@ -48,6 +48,84 @@ export default function Home(){
   catch(e){setError(e instanceof Error?e.message:"Не удалось открыть кейс");setRolling(false);}
   finally{setBusy(false);setRolling(false);}
  }
+  const [upgradeSource, setUpgradeSource] =
+    useState<number | null>(null);
+  const [upgradeTarget, setUpgradeTarget] = useState("");
+  const [upgrading, setUpgrading] = useState(false);
+
+  const upgradeCatalog = Array.from(
+    new Map(
+      cases.flatMap(c => c.items).map(i => [i.name, i])
+    ).values()
+  ).sort((a, b) => a.value - b.value);
+
+  const sourceItem = inventory.find(
+    i => i.id === upgradeSource
+  );
+
+  const targetItem = upgradeCatalog.find(
+    i => i.name === upgradeTarget
+  );
+
+  const upgradeChance =
+    sourceItem &&
+    targetItem &&
+    targetItem.value > sourceItem.value
+      ? Math.min(
+          90,
+          Math.round(
+            sourceItem.value / targetItem.value * 9000
+          ) / 100
+        )
+      : 0;
+
+  async function performUpgrade() {
+    if (!sourceItem || !targetItem || !upgradeChance || upgrading)
+      return;
+
+    setUpgrading(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const response = await fetch("/api/upgrade", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sourceId: sourceItem.id,
+          targetName: targetItem.name
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      setUser(data.user);
+      setInventory(data.inventory);
+      setHistory(data.history);
+
+      setNotice(
+        data.success
+          ? `Апгрейд успешен! Получен ${targetItem.name}`
+          : `Апгрейд не удался. ${sourceItem.name} потерян.`
+      );
+
+      setUpgradeSource(null);
+      setUpgradeTarget("");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Ошибка апгрейда"
+      );
+    } finally {
+      setUpgrading(false);
+    }
+  }
+
  const visible=cases.filter(c=>filter==="all"||(filter==="budget"?c.price<=300:c.price>300));
  const reelStyle={transform:reelTransform};
  return <div className="layout"><aside className="sidebar"><div className="brand">RESTART <i>CASE</i></div><div className="demo">LOCAL DEMO · VIRTUAL COINS</div><div className="navlabel">МЕНЮ</div><a className="nav active" href="#home">⌂ <span>Главная</span></a><a className="nav" href="#cases">▦ <span>Кейсы</span></a><a className="nav" href="#inventory">▣ <span>Инвентарь</span></a><a className="nav" href="#history">◷ <span>История</span></a><div className="side-note"><b>Локальный режим</b>Баланс и предметы сохраняются на этом компьютере. Только виртуальные монеты.</div></aside>
