@@ -87,3 +87,102 @@ footer{display:flex;flex-direction:column;gap:5px;line-height:1.5}footer b{color
 
 /* FIXED RARITY BADGE: .caseArt span had a 62px inherited display size */
 .caseArt span.caseRarity{font-size:11px!important;line-height:1!important;letter-spacing:.35px!important;font-weight:850!important;padding:6px 10px!important;min-width:0!important;width:auto!important;height:auto!important;max-width:max-content!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;filter:none!important;transform:none!important;z-index:4!important;box-shadow:0 4px 14px #0007!important}
+
+/* RESTART CASE — Upgrade System */
+
+.upgradePanel {
+  margin-top: 28px;
+}
+
+.upgradeGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  margin: 28px 0;
+}
+
+.upgradeBox {
+  min-width: 0;
+  min-height: 250px;
+  padding: 22px;
+  background: #151a28;
+  border: 1px solid #34394b;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upgradeBox h3 {
+  color: #fff;
+  margin: 0;
+}
+
+.upgradeBox select {
+  width: 100%;
+  padding: 13px;
+  color: #fff;
+  background: #23293a;
+  border: 1px solid #596077;
+  border-radius: 9px;
+}
+
+.upgradeChance {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.upgradeChance strong {
+  font-size: 34px;
+  color: #cba0ff;
+}
+
+.upgradeChance span {
+  color: #aab0c4;
+}
+
+.upgradeBar {
+  width: 100%;
+  height: 10px;
+  background: #292d3b;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.upgradeBar div {
+  height: 100%;
+  background: linear-gradient(90deg, #8854d6, #dd82ff);
+  transition: width 0.3s;
+}
+
+.upgradeActions {
+  text-align: center;
+}
+
+.upgradeActions button {
+  padding: 14px 36px;
+}
+
+.upgradeActions p {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #aab0c4;
+}
+
+@media (max-width: 800px) {
+  .upgradeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .upgradeBox {
+    min-height: 200px;
+  }
+
+  .upgradeChance {
+    padding: 15px;
+  }
+}
