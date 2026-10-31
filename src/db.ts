@@ -53,3 +53,75 @@ export function sellItem(sessionId: string, id: number) {
   const [item] = store.inventory.splice(index, 1); store.user.balance += item.value; writeAll(db);
   return { user: store.user, sold: item, inventory: store.inventory.slice(0, 60) };
 }
+
+export function upgradeItem(
+  sessionId: string,
+  sourceId: number,
+  targetName: string
+) {
+  const db = readAll();
+  const { store } = ensureSession(sessionId, db);
+
+  const index = store.inventory.findIndex(
+    (item) => item.id === sourceId
+  );
+
+  if (index < 0) {
+    throw new Error("Предмет не найден в инвентаре");
+  }
+
+  const source = store.inventory[index];
+
+  const { cases } = require("./data") as typeof import("./data");
+
+  const target = cases
+    .flatMap((c) => c.items)
+    .find((item) => item.name === targetName);
+
+  if (!target || target.value <= source.value) {
+    throw new Error("Выбери более дорогой предмет");
+  }
+
+  const chance = Math.min(
+    90,
+    Math.round((source.value / target.value) * 9000) / 100
+  );
+
+  const { randomInt } = require("node:crypto");
+
+  const success =
+    randomInt(0, 1000000) < Math.round(chance * 10000);
+
+  store.inventory.splice(index, 1);
+
+  const now = new Date().toLocaleString("ru-RU");
+
+  if (success) {
+    store.inventory.unshift({
+      id: store.nextId++,
+      name: target.name,
+      icon: target.icon,
+      value: target.value,
+      rarity: target.rarity,
+      createdAt: now
+    });
+  }
+
+  store.history.unshift({
+    id: store.nextId++,
+    caseName: success ? "АПГРЕЙД · УСПЕХ" : "АПГРЕЙД · НЕУДАЧА",
+    itemName: `${source.name} → ${target.name}`,
+    itemValue: success ? target.value : 0,
+    createdAt: now
+  });
+
+  writeAll(db);
+
+  return {
+    success,
+    chance,
+    user: store.user,
+    inventory: store.inventory.slice(0, 60),
+    history: store.history.slice(0, 20)
+  };
+}
