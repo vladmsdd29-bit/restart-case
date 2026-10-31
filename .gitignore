@@ -1,0 +1,4 @@
+node_modules
+.next
+restart-case-data.json
+package-lock.json
